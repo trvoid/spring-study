@@ -15,6 +15,7 @@ public class BasicJdbcExampleApplication implements CommandLineRunner {
 
 	@Autowired
 	CarRepository carRepository;
+    
 	public static void main(String[] args) {
 		SpringApplication.run(BasicJdbcExampleApplication.class, args);
 	}
