@@ -18,7 +18,7 @@ public interface CarMapper {
     @Insert(" CREATE TABLE CAR ( " +
             "    ID NUMBER(10) NOT NULL, " +
             "    MODEL VARCHAR2(100) NOT NULL, " +
-            "    MANUFACTURER VARCHAR2(100) NOT NULL, " +
+            "    MANUFACTURER VARCHAR2(100) NULL, " +
             "    CONSTRAINT CAR_PK PRIMARY KEY (ID) " +
             " ) ")
     void createTable();
@@ -26,7 +26,7 @@ public interface CarMapper {
     @Insert(" INSERT INTO CAR ( " +
             "    ID, MODEL, MANUFACTURER " +
             " ) VALUES ( " +
-            "    #{car.id}, #{car.model}, #{car.manufacturer} " +
+            "    #{car.id}, #{car.model}, #{car.manufacturer,jdbcType=VARCHAR} " +
             " ) ")
     void insertCar(@Param("car") Car car);
 
