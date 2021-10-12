@@ -31,15 +31,15 @@ public class BasicMybatisExampleApplication implements CommandLineRunner {
 
 			int carId = (new Random().nextInt()) % 100;
 
-			Car car1 = new Car(carId + 0, "J1", "JELLY");
+			Car car1 = new Car(carId + 0, "J1", "JELLY", "1");
 			carMapper.insertCar((car1));
 			System.out.println(String.format("** Inserted a car: %s", car1.toString()));
 
-			Car car2 = new Car(carId + 1, "T1", "TEAL");
+			Car car2 = new Car(carId + 1, "T1", "TEAL", "2");
 			carMapper.insertCar((car2));
 			System.out.println(String.format("** Inserted a car: %s", car2.toString()));
 
-			Car car3 = new Car(carId + 2, "W1", "WISDOM");
+			Car car3 = new Car(carId + 2, "W1", "WISDOM", null);
 			carMapper.insertCar((car3));
 			System.out.println(String.format("** Inserted a car: %s", car3.toString()));
 		}
