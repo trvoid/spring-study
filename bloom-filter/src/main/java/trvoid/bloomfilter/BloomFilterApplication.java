@@ -9,7 +9,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import javax.sql.DataSource;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 @SpringBootApplication
 public class BloomFilterApplication implements CommandLineRunner {
@@ -21,6 +23,10 @@ public class BloomFilterApplication implements CommandLineRunner {
 
 	public static void main(String[] args) {
 		SpringApplication.run(BloomFilterApplication.class, args);
+	}
+
+	private static void printLog(String s) {
+		System.out.println(String.format("[%s] %s", DateTimeUtils.getFormattedLongDateTimeNow(), s));
 	}
 
 	private void initRejectTable() {
@@ -88,19 +94,21 @@ public class BloomFilterApplication implements CommandLineRunner {
 		System.out.println(String.format("Inserted %d rows.", insertedCount));
 	}
 
-	private BloomFilter<String> initBloomFilter() {
-		System.out.println("Create a Bloom Filter instance.");
-		BloomFilter<String> rejectFilter = BloomFilter.create(Funnels.stringFunnel(Charset.forName("UTF-8")),100000);
+	private BloomFilter<String> initBloomFilter(int expectedInsertions, double fpp) {
+		printLog("Create a Bloom Filter instance.");
+		BloomFilter<String> rejectFilter = BloomFilter.create(Funnels.stringFunnel(Charset.forName("UTF-8")),
+				expectedInsertions,
+				fpp);
 
-		System.out.println("Add all the REJECT data.");
+		printLog("Add all the REJECT data.");
 		List<Reject> list = rejectMapper.findAll();
 		list.forEach(x -> rejectFilter.put(x.getFromPhoneNo() + x.getToPhoneNo()));
 
 		return rejectFilter;
 	}
 
-	private void testBloomFilter(BloomFilter<String> rejectFilter) {
-		System.out.println("Test the Bloom Filter.");
+	private void verifyBloomFilter(BloomFilter<String> rejectFilter) {
+		printLog("Verify the Bloom Filter.");
 		String[] values = new String[] {
 			"0800000000101000000001",
 			"0800000000102000000001"
@@ -111,19 +119,100 @@ public class BloomFilterApplication implements CommandLineRunner {
 		}
 	}
 
+	private void comparePerformance(int testDataSize, BloomFilter<String> rejectFilter) {
+		printLog(String.format("Prepare test data. testDataSize: %d", testDataSize));
+
+		int initialCapacity = testDataSize;
+
+		List<String> fromPhoneNoData = new ArrayList<String>(initialCapacity);
+		List<String> toPhoneNoData = new ArrayList<String>(initialCapacity);
+		Random random = new Random();
+		for (int i = 0; i < testDataSize; i++) {
+			fromPhoneNoData.add(String.format("080%08d", random.nextInt(100000000)));
+			toPhoneNoData.add(String.format("010%08d", random.nextInt(100000000)));
+		}
+
+		printLog("Start test.");
+
+		List<Boolean> results1 = new ArrayList<Boolean>(initialCapacity);
+		List<Boolean> results2 = new ArrayList<Boolean>(initialCapacity);
+		List<Boolean> results3 = new ArrayList<Boolean>(initialCapacity);
+
+		long t1 = System.currentTimeMillis();
+
+		for (int i = 0; i < testDataSize; i++) {
+			int count = rejectMapper.countReject(fromPhoneNoData.get(i), toPhoneNoData.get(i));
+			results1.add(count > 0);
+		}
+
+		long t2 = System.currentTimeMillis();
+
+		for (int i = 0; i < testDataSize; i++) {
+			boolean found = rejectFilter.mightContain(fromPhoneNoData.get(i) + toPhoneNoData.get(i));
+			results2.add(found);
+		}
+
+		long t3 = System.currentTimeMillis();
+
+		for (int i = 0; i < testDataSize; i++) {
+			boolean found = rejectFilter.mightContain(fromPhoneNoData.get(i) + toPhoneNoData.get(i));
+			if (found) {
+				int count = rejectMapper.countReject(fromPhoneNoData.get(i), toPhoneNoData.get(i));
+				results3.add(count > 0);
+			} else {
+				results3.add(false);
+			}
+		}
+
+		long t4 = System.currentTimeMillis();
+
+		printLog("End test.");
+
+		printLog(String.format("t1: %s", DateTimeUtils.getFormattedLongDateTime(t1)));
+		printLog(String.format("t2: %s", DateTimeUtils.getFormattedLongDateTime(t2)));
+		printLog(String.format("t3: %s", DateTimeUtils.getFormattedLongDateTime(t3)));
+		printLog(String.format("t4: %s", DateTimeUtils.getFormattedLongDateTime(t4)));
+
+		printLog("== Result Analysis ==");
+		int actualPositiveCount = 0;
+		int falsePositiveCount = 0;
+		for (int i = 0; i < testDataSize; i++) {
+			if (results1.get(i) == true) {
+				actualPositiveCount++;
+			} else {
+				if (results2.get(i) == true) {
+					falsePositiveCount++;
+				}
+			}
+		}
+
+		double falsePositiveRate = (double) falsePositiveCount / testDataSize;
+
+		printLog(String.format("Actual Positive Count: %d", actualPositiveCount));
+		printLog(String.format("False Positive Count: %d", falsePositiveCount));
+		printLog(String.format("False Positive Rate: %.4f", falsePositiveRate));
+	}
+
 	@Override
 	public void run(String... args) throws Exception {
-		System.out.println("DataSource = " + dataSource);
+		printLog("DataSource = " + dataSource);
 
 		if (rejectMapper.countTable() == 0) {
 			rejectMapper.createTable();
-			System.out.println("** Created a table: REJECT");
+			printLog("** Created a table: REJECT");
 		}
 
 		//insertTestData();
 
-		BloomFilter<String> rejectFilter = initBloomFilter();
-		testBloomFilter(rejectFilter);
+		int expectedInsertions = 100000;
+		double fpp = 0.01;
+
+		BloomFilter<String> rejectFilter = initBloomFilter(expectedInsertions, fpp);
+		verifyBloomFilter(rejectFilter);
+
+		int testDataSize = 1000000;
+
+		comparePerformance(testDataSize, rejectFilter);
 
 		System.exit(0);
 	}

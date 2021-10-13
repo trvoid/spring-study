@@ -30,7 +30,7 @@ public interface RejectMapper {
     void insertReject(@Param("reject") Reject reject);
 
     @Select("SELECT COUNT(*) FROM REJECT WHERE FROM_PHONE_NO = #{fromPhoneNo} AND TO_PHONE_NO = #{toPhoneNo} ")
-    int countCar(@Param("fromPhoneNo") String fromPhoneNo, @Param("toPhoneNo") String toPhoneNo);
+    int countReject(@Param("fromPhoneNo") String fromPhoneNo, @Param("toPhoneNo") String toPhoneNo);
 
     @Select(SELECT)
     List<Reject> findAll();
