@@ -9,7 +9,7 @@ import java.util.List;
 
 @Mapper
 public interface CarMapper {
-    String SELECT = " SELECT ID, MODEL, MANUFACTURER, CATEGORY FROM CAR ";
+    String SELECT = " SELECT ID, MODEL, MANUFACTURER, CATEGORY, SEATER FROM CAR ";
 
     @Select(" SELECT COUNT(1) FROM ALL_OBJECTS " +
             " WHERE OBJECT_TYPE = 'TABLE' AND OBJECT_NAME = 'CAR' ")
@@ -20,14 +20,15 @@ public interface CarMapper {
             "    MODEL VARCHAR2(100) NOT NULL, " +
             "    MANUFACTURER VARCHAR2(100) NULL, " +
             "    CATEGORY CHAR(1) NULL, " +
+            "    SEATER NUMBER(2) NULL, " +
             "    CONSTRAINT CAR_PK PRIMARY KEY (ID) " +
             " ) ")
     void createTable();
 
     @Insert(" INSERT INTO CAR ( " +
-            "    ID, MODEL, MANUFACTURER, CATEGORY " +
+            "    ID, MODEL, MANUFACTURER, CATEGORY, SEATER " +
             " ) VALUES ( " +
-            "    #{car.id}, #{car.model}, #{car.manufacturer,jdbcType=VARCHAR}, #{car.category,jdbcType=VARCHAR} " +
+            "    #{car.id}, #{car.model}, #{car.manufacturer,jdbcType=VARCHAR}, #{car.category,jdbcType=VARCHAR}, #{car.seater,jdbcType=INTEGER} " +
             " ) ")
     void insertCar(@Param("car") Car car);
 

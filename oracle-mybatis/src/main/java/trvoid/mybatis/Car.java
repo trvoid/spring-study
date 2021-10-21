@@ -5,12 +5,14 @@ public class Car {
     private String model;
     private String manufacturer;
     private String category;
+    private int seater;
 
-    public Car(int id, String model, String manufacturer, String category) {
+    public Car(int id, String model, String manufacturer, String category, int seater) {
         this.id = id;
         this.model = model;
         this.manufacturer = manufacturer;
         this.category = category;
+        this.seater = seater;
     }
 
     public int getId() {
@@ -45,8 +47,16 @@ public class Car {
         this.category = category;
     }
 
+    public int getSeater() {
+        return seater;
+    }
+
+    public void setSeater(int seater) {
+        this.seater = seater;
+    }
+
     @Override
     public String toString() {
-        return String.format("id:%d, model:%s, manufacturer:%s, category:%s", id, model, manufacturer, category);
+        return String.format("id:%d, model:%s, manufacturer:%s, category:%s, seater:%d", id, model, manufacturer, category, seater);
     }
 }
