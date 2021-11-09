@@ -1,0 +1,17 @@
+spring:
+  profiles:
+    active: local
+  servlet:
+    multipart:
+      max-file-size: 1MB
+      max-request-size: 2MB
+
+---
+
+spring:
+  profiles: local
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/my_test_db
+    username: u1234
+    password: p1234
